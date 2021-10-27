@@ -57,7 +57,7 @@ recursos_patrimoniales <-
 
 patrimonio_material <-
   st_read(
-    "/vsicurl/https://raw.githubusercontent.com/mauguemu/Proyecto_1_documento/master/Tablas/patrimonio_material.csv",
+    "/vsicurl/https://raw.githubusercontent.com/mauguemu/Proyecto_1_documento/master/Tablas/patrimonio_material_1.csv",
    quiet = TRUE
   )
 
@@ -71,16 +71,48 @@ patrimonio_inmaterial <-
 ```
 
 # Tablas
-```{r tabla, message = FALSE, warning = FALSE}
+```{r tabla patrimonio material, message = FALSE, warning = FALSE}
 patrimonio_material%>%
-  select(id_recurso, denominacion, subcategoria, descripcion,estado_conservacion)%>%
+  select(id_recurso, denominacion, subcategoria, estado_conservacion)%>%
   datatable()
 
+```
+```{r patrimonio material, message = FALSE, warning = FALSE}
 patrimonio_inmaterial%>%
-  select(id_recurso, Denominacion, Subcategoria, Descripcion,Alcance)%>%
+  select(id_recurso, Denominacion, Subcategoria, Alcance)%>%
   datatable()
+```
+
+
+#Gráficos
+
+##Gráficos
+```{r grafico estado de conservacion, message=FALSE, warning=FALSE}
+patrimonio_material %>%
+  group_by(estado_conservacion) %>%
+  summarize(suma_registros = n()) %>%
+  filter(!is.na(estado_conservacion))  %>%
+  plot_ly(x = ~ estado_conservacion,
+          y = ~ suma_registros,
+          type="bar",color = I("darkgreen")) %>%
+  layout(title = "Estado de conservación",
+         xaxis = list(title = "Estado de conservación"),
+         yaxis = list(title = "Cantidad de registros"))
+
 
 
 ```
 
+```{r grafico declaracion patrimonial, message=FALSE, warning=FALSE}
+patrimonio_material %>%
+  group_by(declaratoria) %>%
+  summarize(suma_registros = n()) %>%
+  filter(!is.na(declaratoria))  %>%
+  plot_ly(x = ~ declaratoria,
+          y = ~ suma_registros,
+          type="bar",color = I("blue")) %>%
+  layout(title = "Recursos con figura de protección legal",
+         xaxis = list(title = "Declaratoria"),
+         yaxis = list(title = "Cantidad de registros"))
+```
 
