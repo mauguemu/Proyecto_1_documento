@@ -37,21 +37,37 @@ library(plotly)
 ```{r datos, message = FALSE, warning=FALSE}
 #Lectura datos zonas
 zonas <-
-  st_read("https://raw.githubusercontent.com/mauguemu/Proyecto_1_documento/master/Capas/zonas_wgs84.geojson",
+  st_read("https://raw.githubusercontent.com/mauguemu/Proyecto_1_documento/master/Capas/zonas.geojson",
     quiet = TRUE
   )
+
+# Transformación del CRS del objeto zonas
+zonas <-
+  zonas %>%
+  st_transform(4326)
 
 #Lectura datos cuadrantes
 cuadrantes <-
-  st_read("https://raw.githubusercontent.com/mauguemu/Proyecto_1_documento/master/Capas/cuadrantes_wgs84.geojson",
+  st_read("https://raw.githubusercontent.com/mauguemu/Proyecto_1_documento/master/Capas/cuadrantes.geojson",
     quiet = TRUE
   )
 
+# Transformación del CRS de cuadrantes 
+cuadrantes <-
+  cuadrantes %>%
+  st_transform(4326)
+
 #Lectura datos recursos patimoniales  
 recursos_patrimoniales <-
-  st_read("https://raw.githubusercontent.com/mauguemu/Proyecto_1_documento/master/Capas/recursos_patrimonio_wgs84.geojson",
+  st_read("https://raw.githubusercontent.com/mauguemu/Proyecto_1_documento/master/Capas/recursos_patrimonio.geojson",
     quiet = TRUE
   )
+
+# Transformación del CRS de recursos patrimoniales
+
+recursos_patrimoniales <-
+  recursos_patrimoniales %>%
+  st_transform(4326)
 
 #Lectura patrimonio_material
 
@@ -64,8 +80,13 @@ patrimonio_material <-
 #lectura patrimonio_inmaterial
 patrimonio_inmaterial <-
   st_read(
-    "/vsicurl/https://raw.githubusercontent.com/mauguemu/Proyecto_1_documento/master/Tablas/patrimonio_inmaterial.csv",
+    "/vsicurl/https://raw.githubusercontent.com/mauguemu/Proyecto_1_documento/master/Tablas/patrimonio_inmaterial_1.csv",
    quiet = TRUE
+  )
+
+altitud <-
+  rast(
+    "/vsicurl/https://raw.githubusercontent.com/tpb728O-programaciongeoespacialr/2021ii/master/datos/worldclim/altitud.tif"
   )
 
 ```
@@ -74,13 +95,12 @@ patrimonio_inmaterial <-
 ```{r tabla patrimonio material, message = FALSE, warning = FALSE}
 patrimonio_material%>%
   select(id_recurso, denominacion, subcategoria, estado_conservacion)%>%
-  datatable()
-
+  datatable(patrimonio_material, options = list(language = list(url = '//cdn.datatables.net/plug-ins/1.11.3/i18n/es_es.json'), pageLength = 12))
 ```
 ```{r patrimonio material, message = FALSE, warning = FALSE}
 patrimonio_inmaterial%>%
-  select(id_recurso, Denominacion, Subcategoria, Alcance)%>%
-  datatable()
+  select(Id_recurso, Denominacion, Subcategoria, Alcance)%>%
+  datatable(patrimonio_inmaterial, options = list(language = list(url = '//cdn.datatables.net/plug-ins/1.11.3/i18n/es_es.json'), pageLength = 12))
 ```
 
 
@@ -95,9 +115,10 @@ patrimonio_material %>%
   plot_ly(x = ~ estado_conservacion,
           y = ~ suma_registros,
           type="bar",color = I("darkgreen")) %>%
-  layout(title = "Estado de conservación",
+  layout(title = "Estado de conservación de los recursos del patrimonio material",
          xaxis = list(title = "Estado de conservación"),
-         yaxis = list(title = "Cantidad de registros"))
+         yaxis = list(title = "Cantidad de recursos"))%>%
+   config(locale = "es")
 
 
 
@@ -113,6 +134,67 @@ patrimonio_material %>%
           type="bar",color = I("blue")) %>%
   layout(title = "Recursos con figura de protección legal",
          xaxis = list(title = "Declaratoria"),
-         yaxis = list(title = "Cantidad de registros"))
+         yaxis = list(title = "Cantidad de recursos"))%>%
+   config(locale = "es")
+```
+
+```{r mapa, message = FALSE, warning = FALSE}
+# Conversión del objeto altitud a la clase RasterLayer
+altitud_rl <- raster::raster(altitud)
+
+# Mapa leaflet básico con capas de zonas y recursos patrimoniales 
+leaflet() %>%
+  addTiles() %>%
+  setView(-83.0292, 9.9952, 15) %>%
+  
+  addProviderTiles(
+    providers$CartoDB.Positron, group = "carto_DB") %>%
+  addProviderTiles(
+    providers$Esri.WorldImagery, group = "Esri") %>%
+  
+  addRasterImage(
+    altitud_rl, 
+    opacity = 0.6,
+    group = "Altitud"
+  ) %>% 
+  
+  addPolygons(
+    data = zonas,
+    color = "black",
+    fillColor = "transparent",
+    popup = ~nombre,
+    label= ~id_zona,
+    stroke = TRUE,
+    weight = 1.0,
+    group = "Zonas delimitadas"
+  )  %>%
+  
+  addPolygons(
+    data = cuadrantes,
+    color = "black",
+    fillColor = "transparent",
+    stroke = TRUE,
+    weight = 1.0,
+    group = "Cuadrantes"
+  ) %>%
+  
+  addCircleMarkers(
+    data = recursos_patrimoniales,
+    stroke = F,
+    radius = 4,
+    popup = ~denominacion,
+    label = ~codigo,
+    fillColor = 'orange',
+    fillOpacity = 1,
+    group = "Recursos patrimoniales"
+  )%>%
+  
+  addLayersControl(
+    baseGroups = c("Carto_DB","Esri"),
+    overlayGroups = c("Altitud","Zonas delimitadas","cuadrantes", "Recursos patrimoniales"),
+    options = layersControlOptions(collapsed = T)
+  )
+  
+
 ```
 
