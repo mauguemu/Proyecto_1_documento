@@ -1,0 +1,86 @@
+---
+title: "Proyecto_1_mgm"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Carga de paquetes 
+
+```{r paquetes, message = FALSE, warning = FALSE}
+# Paquete para manipulación de datos
+library(dplyr)
+
+# Paquete para manejo de datos vectoriales
+library(sf)
+
+# Paquetes para manejo de datos raster
+library(terra)
+
+# Paquete para mapas interactivos
+library(leaflet)
+
+#paquete para manejo de tablas
+library(DT)
+
+#Paquete para graficación
+library(ggplot2)
+
+library(plotly)
+
+```
+
+## Carga de datos 
+
+```{r datos, message = FALSE, warning=FALSE}
+#Lectura datos zonas
+zonas <-
+  st_read("https://raw.githubusercontent.com/mauguemu/Proyecto_1_documento/master/Capas/zonas_wgs84.geojson",
+    quiet = TRUE
+  )
+
+#Lectura datos cuadrantes
+cuadrantes <-
+  st_read("https://raw.githubusercontent.com/mauguemu/Proyecto_1_documento/master/Capas/cuadrantes_wgs84.geojson",
+    quiet = TRUE
+  )
+
+#Lectura datos recursos patimoniales  
+recursos_patrimoniales <-
+  st_read("https://raw.githubusercontent.com/mauguemu/Proyecto_1_documento/master/Capas/recursos_patrimonio_wgs84.geojson",
+    quiet = TRUE
+  )
+
+#Lectura patrimonio_material
+
+patrimonio_material <-
+  st_read(
+    "/vsicurl/https://raw.githubusercontent.com/mauguemu/Proyecto_1_documento/master/Tablas/patrimonio_material.csv",
+   quiet = TRUE
+  )
+
+#lectura patrimonio_inmaterial
+patrimonio_inmaterial <-
+  st_read(
+    "/vsicurl/https://raw.githubusercontent.com/mauguemu/Proyecto_1_documento/master/Tablas/patrimonio_inmaterial.csv",
+   quiet = TRUE
+  )
+
+```
+
+# Tablas
+```{r tabla, message = FALSE, warning = FALSE}
+patrimonio_material%>%
+  select(id_recurso, denominacion, subcategoria, descripcion,estado_conservacion)%>%
+  datatable()
+
+patrimonio_inmaterial%>%
+  select(id_recurso, Denominacion, Subcategoria, Descripcion,Alcance)%>%
+  datatable()
+
+
+```
+
+
